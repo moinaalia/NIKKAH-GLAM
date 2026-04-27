@@ -12,6 +12,8 @@ const catalogueSection = document.getElementById("catalogue");
 const categoryBanners = document.querySelectorAll(".category-banner");
 const adminOrdersPanel = document.getElementById("admin-orders-panel");
 const adminOrdersList = document.getElementById("admin-orders-list");
+const adminProductsPanel = document.getElementById("admin-products-panel");
+const adminProductsList = document.getElementById("admin-products-list");
 
 let products = [];
 let activeFilter = "all";
@@ -34,6 +36,17 @@ function formatTargetLabel(target) {
   if (target === "femme_honneur") return "Femme d'honneur";
   if (target === "famille") return "Famille";
   return "Public mariage";
+}
+
+function getGenderGroupLabel(product) {
+  const source = `${product.name || ""} ${product.line || ""}`.toLowerCase();
+  if (product.target === "marie") return "Homme";
+  if (product.target === "mariee" || product.target === "femme_honneur") return "Femme";
+  if (source.includes("homme") || source.includes("marié")) return "Homme";
+  if (source.includes("femme") || source.includes("mariée") || source.includes("mariee")) {
+    return "Femme";
+  }
+  return "Mixte";
 }
 
 function detectTargetAudience(name, line) {
@@ -96,26 +109,50 @@ function renderProducts() {
     return;
   }
 
-  productsGrid.innerHTML = filtered
-    .map(
-      (p) => `
-      <article class="product-card">
-        <img src="${p.image}" alt="${p.name}" />
-        <div class="product-meta">
-          <h4>${p.name}</h4>
-          <span class="price">${p.price} €</span>
+  const groups = new Map();
+  filtered.forEach((product) => {
+    const styleLabel = formatStyleLabel(product.style);
+    const genderLabel = getGenderGroupLabel(product);
+    const lineLabel = product.line || "Collection générale";
+    const key = `${styleLabel}|||${genderLabel}|||${lineLabel}`;
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(product);
+  });
+
+  productsGrid.innerHTML = [...groups.entries()]
+    .map(([key, groupProducts]) => {
+      const [styleLabel, genderLabel, lineLabel] = key.split("|||");
+      return `
+      <section class="catalog-group">
+        <div class="catalog-group-head">
+          <h4>${styleLabel} - ${genderLabel}</h4>
+          <p>Sous-catégorie: ${lineLabel}</p>
         </div>
-        <p class="category-tag">
-          ${formatCategoryLabel(p.category)} • ${formatStyleLabel(
-            p.style
-          )} • ${p.line} • ${formatTargetLabel(p.target)}
-        </p>
-        <p class="description">${p.description}</p>
-        <button class="btn ghost order-now-btn" data-id="${p.id}">
-          Commander ce produit
-        </button>
-      </article>`
-    )
+        <div class="catalog-group-grid">
+          ${groupProducts
+            .map(
+              (p) => `
+            <article class="product-card">
+              <img src="${p.image}" alt="${p.name}" />
+              <div class="product-meta">
+                <h4>${p.name}</h4>
+                <span class="price">${p.price} €</span>
+              </div>
+              <p class="category-tag">
+                ${formatCategoryLabel(p.category)} • ${formatStyleLabel(
+                p.style
+              )} • ${p.line} • ${formatTargetLabel(p.target)}
+              </p>
+              <p class="description">${p.description}</p>
+              <button class="btn ghost order-now-btn" data-id="${p.id}">
+                Commander ce produit
+              </button>
+            </article>`
+            )
+            .join("")}
+        </div>
+      </section>`;
+    })
     .join("");
 
   document.querySelectorAll(".order-now-btn").forEach((btn) => {
@@ -166,6 +203,7 @@ function setAdminVisibility() {
   if (!hasAdminPageAccess()) {
     adminSection.classList.add("hidden");
     adminOrdersPanel.classList.add("hidden");
+    adminProductsPanel.classList.add("hidden");
     return;
   }
   adminSection.classList.remove("hidden");
@@ -173,10 +211,12 @@ function setAdminVisibility() {
     adminLoginForm.classList.add("hidden");
     adminForm.classList.remove("hidden");
     adminOrdersPanel.classList.remove("hidden");
+    adminProductsPanel.classList.remove("hidden");
   } else {
     adminLoginForm.classList.remove("hidden");
     adminForm.classList.add("hidden");
     adminOrdersPanel.classList.add("hidden");
+    adminProductsPanel.classList.add("hidden");
   }
 }
 
@@ -216,6 +256,47 @@ async function refreshAdminOrders() {
   if (!hasAdminPageAccess() || !isAdminAuthenticated) return;
   const orders = await fetchOrders();
   renderOrders(orders);
+}
+
+function renderAdminProducts() {
+  if (!products.length) {
+    adminProductsList.innerHTML =
+      '<p class="input-help">Aucun produit disponible.</p>';
+    return;
+  }
+  adminProductsList.innerHTML = products
+    .map(
+      (product) => `
+        <article class="order-card">
+          <p><strong>${product.name}</strong> - ${product.price} €</p>
+          <p>${formatStyleLabel(product.style)} • ${formatCategoryLabel(
+        product.category
+      )} • ${product.line} • ${getGenderGroupLabel(product)}</p>
+          <button class="btn ghost admin-delete-product-btn" data-id="${product.id}">
+            Supprimer ce produit
+          </button>
+        </article>`
+    )
+    .join("");
+
+  document.querySelectorAll(".admin-delete-product-btn").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const confirmed = window.confirm("Supprimer ce produit ?");
+      if (!confirmed) return;
+      const response = await fetch(`/api/products/${btn.dataset.id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (!response.ok) {
+        alert("Suppression impossible.");
+        return;
+      }
+      products = await fetchProducts();
+      renderProducts();
+      renderAdminProducts();
+      alert("Produit supprimé.");
+    });
+  });
 }
 
 async function checkAdminSession() {
@@ -258,8 +339,8 @@ adminForm.addEventListener("submit", async (event) => {
   const imageFileInput = document.getElementById("admin-image-file");
   const imageFile = imageFileInput.files[0];
 
-  if (!name || !category || !style || !target || !line || !price) {
-    alert("Merci de remplir tous les champs.");
+  if (!name || !price) {
+    alert("Merci de remplir au minimum le nom et le prix.");
     return;
   }
 
@@ -269,19 +350,16 @@ adminForm.addEventListener("submit", async (event) => {
   }
 
   const finalTarget =
-    target === "auto" ? detectTargetAudience(name, line) : target;
+    !target || target === "auto" ? detectTargetAudience(name, line) : target;
 
   const payload = new FormData();
   payload.append("name", name);
   payload.append("category", category);
   payload.append("style", style);
   payload.append("target", finalTarget);
-  payload.append("line", line);
+  if (line) payload.append("line", line);
   payload.append("price", String(price));
-  payload.append(
-    "description",
-    getAutoDescription(`${name} (${line})`, category, finalTarget)
-  );
+  payload.append("description", getAutoDescription(`${name} (${line})`, category, finalTarget));
   if (imageFile) {
     payload.append("imageFile", imageFile);
   } else {
@@ -301,6 +379,7 @@ adminForm.addEventListener("submit", async (event) => {
 
   products = await fetchProducts();
   renderProducts();
+  renderAdminProducts();
   adminForm.reset();
   alert("Produit ajouté avec succès.");
 });
@@ -338,6 +417,7 @@ adminLogoutBtn.addEventListener("click", async () => {
   isAdminAuthenticated = false;
   setAdminVisibility();
   adminOrdersList.innerHTML = "";
+  adminProductsList.innerHTML = "";
 });
 
 async function init() {
@@ -346,6 +426,7 @@ async function init() {
   isAdminAuthenticated = await checkAdminSession();
   setAdminVisibility();
   await refreshAdminOrders();
+  renderAdminProducts();
 }
 
 init();

@@ -194,12 +194,14 @@
           <input type="text" id="admin-product-name" placeholder="Nom du produit" required />
           <select id="admin-category" title="Catégorie du produit" required>
             <option value="">Type de produit</option>
+            <option value="auto">Détection automatique</option>
             <option value="vetement">Vêtement</option>
             <option value="chaussure">Chaussure</option>
             <option value="accessoire">Accessoire</option>
           </select>
           <select id="admin-style" title="Style du produit" required>
             <option value="">Style</option>
+            <option value="auto">Détection automatique</option>
             <option value="traditionnel">Traditionnel</option>
             <option value="moderne">Moderne</option>
           </select>
@@ -215,8 +217,7 @@
           <input
             type="text"
             id="admin-line"
-            placeholder="Sous-catégorie (ex: Kandou)"
-            required
+            placeholder="Sous-catégorie (ex: Kandou) - optionnel"
           />
           <input
             type="number"
@@ -249,6 +250,10 @@
         <div id="admin-orders-panel" class="admin-orders hidden">
           <h4>Commandes reçues sur le site</h4>
           <div id="admin-orders-list" class="admin-orders-list"></div>
+        </div>
+        <div id="admin-products-panel" class="admin-orders hidden">
+          <h4>Gestion des produits (suppression)</h4>
+          <div id="admin-products-list" class="admin-orders-list"></div>
         </div>
       </section>
     </main>

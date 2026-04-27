@@ -102,6 +102,89 @@ function writeOrders(orders) {
   fs.writeFileSync(ORDERS_FILE, JSON.stringify({ orders }, null, 2), "utf8");
 }
 
+function inferCategoryStyleTargetLine({ name, line, imageHint }) {
+  const source = `${name || ""} ${line || ""} ${imageHint || ""}`.toLowerCase();
+  const includesOne = (words) => words.some((word) => source.includes(word));
+
+  let category = "vetement";
+  if (
+    includesOne([
+      "chaussure",
+      "escarpin",
+      "sandale",
+      "mocassin",
+      "sneaker",
+      "talon",
+      "shoe",
+      "heel",
+      "boot",
+    ])
+  ) {
+    category = "chaussure";
+  } else if (
+    includesOne([
+      "accessoire",
+      "bijou",
+      "voile",
+      "sac",
+      "parure",
+      "collier",
+      "bracelet",
+      "boucle",
+      "accessory",
+      "bag",
+    ])
+  ) {
+    category = "accessoire";
+  }
+
+  const style = includesOne([
+    "moderne",
+    "modern",
+    "costume",
+    "smoking",
+    "robe soiree",
+    "robe soirée",
+    "suit",
+  ])
+    ? "moderne"
+    : "traditionnel";
+
+  let target = "invite";
+  if (includesOne(["homme", "marié", "marie ", "monsieur", "man", "men"])) {
+    target = "marie";
+  } else if (
+    includesOne([
+      "femme",
+      "mariée",
+      "mariee",
+      "demoiselle",
+      "femme d'honneur",
+      "woman",
+      "women",
+      "lady",
+    ])
+  ) {
+    target = "mariee";
+  } else if (includesOne(["famille", "family"])) {
+    target = "famille";
+  }
+
+  let inferredLine = "Collection générale";
+  if (includesOne(["kandou"])) inferredLine = "Kandou";
+  else if (includesOne(["robe"])) inferredLine = "Robe";
+  else if (includesOne(["costume", "smoking", "suit"])) inferredLine = "Costume";
+  else if (includesOne(["voile"])) inferredLine = "Voile";
+  else if (includesOne(["bijou", "parure"])) inferredLine = "Parure";
+  else if (includesOne(["sac", "bag"])) inferredLine = "Sac";
+  else if (category === "chaussure") inferredLine = "Chaussures cérémonie";
+  else if (category === "accessoire") inferredLine = "Accessoires mariage";
+  else if (style === "traditionnel") inferredLine = "Tenue traditionnelle";
+  else inferredLine = "Tenue moderne";
+
+  return { category, style, target, line: inferredLine };
+}
+
 function requireAdmin(req, res, next) {
   const token = req.cookies.admin_token;
   if (!token) {
@@ -197,7 +280,7 @@ app.post("/api/orders", (req, res) => {
 
 app.post("/api/products", requireAdmin, upload.single("imageFile"), (req, res) => {
   const { name, category, style, target, line, price, imageUrl, description } = req.body;
-  if (!name || !category || !style || !target || !line || !price || !description) {
+  if (!name || !price) {
     res.status(400).json({ message: "Champs requis manquants." });
     return;
   }
@@ -214,16 +297,34 @@ app.post("/api/products", requireAdmin, upload.single("imageFile"), (req, res) =
     return;
   }
 
+  const inferred = inferCategoryStyleTargetLine({
+    name: String(name).trim(),
+    line: String(line || "").trim(),
+    imageHint: req.file?.originalname || image,
+  });
+
+  const finalCategory =
+    !category || category === "auto" ? inferred.category : String(category).trim();
+  const finalStyle =
+    !style || style === "auto" ? inferred.style : String(style).trim();
+  const finalTarget =
+    !target || target === "auto" ? inferred.target : String(target).trim();
+  const finalLine = line ? String(line).trim() : inferred.line;
+  const finalDescription =
+    description && String(description).trim().length > 0
+      ? String(description).trim()
+      : `${String(name).trim()} - ${finalLine}, ${finalStyle}, ${finalCategory}.`;
+
   const newProduct = {
     id: crypto.randomUUID(),
     name: String(name).trim(),
-    category: String(category).trim(),
-    style: String(style).trim(),
-    target: String(target).trim(),
-    line: String(line).trim(),
+    category: finalCategory,
+    style: finalStyle,
+    target: finalTarget,
+    line: finalLine,
     price: Number(price),
     image,
-    description: String(description).trim(),
+    description: finalDescription,
     createdAt: new Date().toISOString(),
   };
 
@@ -231,6 +332,23 @@ app.post("/api/products", requireAdmin, upload.single("imageFile"), (req, res) =
   products.unshift(newProduct);
   writeProducts(products);
   res.status(201).json({ product: newProduct });
+});
+
+app.delete("/api/products/:id", requireAdmin, (req, res) => {
+  const productId = String(req.params.id || "").trim();
+  if (!productId) {
+    res.status(400).json({ message: "Identifiant produit manquant." });
+    return;
+  }
+  const products = readProducts();
+  const productToDelete = products.find((item) => item.id === productId);
+  if (!productToDelete) {
+    res.status(404).json({ message: "Produit introuvable." });
+    return;
+  }
+  const nextProducts = products.filter((item) => item.id !== productId);
+  writeProducts(nextProducts);
+  res.json({ ok: true });
 });
 
 app.get(/.*/, (_req, res) => {

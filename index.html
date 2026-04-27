@@ -19,6 +19,7 @@
           <img src="assets/logo-nikkah-glam.svg" alt="Logo NIKKAH GLAM" />
         </a>
         <div class="nav-links">
+          <a href="#promotions">Promotions</a>
           <a href="#catalogue">Catalogue</a>
           <a href="#commande">Commander</a>
         </div>
@@ -125,6 +126,17 @@
         </div>
       </section>
 
+      <section class="container section promo-showcase" id="promotions">
+        <div class="section-head">
+          <h3>Promotions et Prix Fideles</h3>
+          <p class="promo-intro">
+            Des offres speciales et prix avantageux pour nos clientes et clients
+            fideles.
+          </p>
+        </div>
+        <div id="promo-products-grid" class="products-grid"></div>
+      </section>
+
       <section class="container section" id="catalogue">
         <div class="section-head">
           <h3>Catalogue (classé automatiquement)</h3>
@@ -219,6 +231,26 @@
             id="admin-line"
             placeholder="Sous-catégorie (ex: Kandou) - optionnel"
           />
+          <label class="admin-check">
+            <input type="checkbox" id="admin-promo-enabled" />
+            Mettre ce produit en promotion
+          </label>
+          <input
+            type="number"
+            id="admin-promo-price"
+            min="0"
+            step="1"
+            placeholder="Prix promo (optionnel)"
+          />
+          <input
+            type="text"
+            id="admin-promo-label"
+            placeholder="Titre promo (ex: Offre Fideles)"
+          />
+          <textarea
+            id="admin-promo-description"
+            placeholder="Description promo (optionnel)"
+          ></textarea>
           <input
             type="number"
             id="admin-price"

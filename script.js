@@ -10,6 +10,7 @@ const adminSection = document.getElementById("admin");
 const adminLogoutBtn = document.getElementById("admin-logout-btn");
 const catalogueSection = document.getElementById("catalogue");
 const categoryBanners = document.querySelectorAll(".category-banner");
+const promoProductsGrid = document.getElementById("promo-products-grid");
 const adminOrdersPanel = document.getElementById("admin-orders-panel");
 const adminOrdersList = document.getElementById("admin-orders-list");
 const adminProductsPanel = document.getElementById("admin-products-panel");
@@ -72,12 +73,21 @@ function getAutoDescription(productName, category, target) {
 }
 
 function normalizeProduct(product) {
+  const price = Number(product.price) || 0;
+  const promoPrice = Number(product.promoPrice);
+  const hasValidPromoPrice =
+    Number.isFinite(promoPrice) && promoPrice > 0 && promoPrice < price;
   return {
     ...product,
+    price,
     category: product.category || "vetement",
     style: product.style || "traditionnel",
     target: product.target || detectTargetAudience(product.name || "", product.line || ""),
     line: product.line || "Collection générale",
+    promoEnabled: product.promoEnabled === true,
+    promoPrice: hasValidPromoPrice ? promoPrice : null,
+    promoLabel: product.promoLabel || "",
+    promoDescription: product.promoDescription || "",
   };
 }
 
@@ -86,6 +96,89 @@ async function fetchProducts() {
   if (!response.ok) return [];
   const data = await response.json();
   return Array.isArray(data.products) ? data.products.map(normalizeProduct) : [];
+}
+
+function isProductOnPromotion(product) {
+  return (
+    product.promoEnabled === true &&
+    Number.isFinite(product.promoPrice) &&
+    product.promoPrice > 0 &&
+    product.promoPrice < product.price
+  );
+}
+
+function getProductCurrentPrice(product) {
+  return isProductOnPromotion(product) ? product.promoPrice : product.price;
+}
+
+function renderPriceHtml(product) {
+  if (!isProductOnPromotion(product)) {
+    return `<span class="price">${product.price} €</span>`;
+  }
+  return `
+    <div class="price-stack">
+      <span class="old-price">${product.price} €</span>
+      <span class="price promo-price">${product.promoPrice} €</span>
+    </div>`;
+}
+
+function attachOrderNowHandlers() {
+  document.querySelectorAll(".order-now-btn").forEach((btn) => {
+    btn.onclick = () => {
+      const product = products.find((p) => p.id === btn.dataset.id);
+      if (!product) return;
+      const text = `Bonjour NIKKAH GLAM, je suis interesse(e) par ${product.name} (${getProductCurrentPrice(
+        product
+      )} EUR). Pouvez-vous me confirmer la disponibilite ?`;
+      const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`;
+      window.open(url, "_blank");
+    };
+  });
+}
+
+function renderPromoProducts() {
+  const promoProducts = products.filter(isProductOnPromotion);
+  if (!promoProducts.length) {
+    promoProductsGrid.innerHTML = `
+      <article class="product-card">
+        <div class="product-meta">
+          <h4>Aucune promotion active pour le moment</h4>
+        </div>
+        <p class="description">Revenez bientot pour profiter de nos nouvelles offres.</p>
+      </article>`;
+    return;
+  }
+
+  promoProductsGrid.innerHTML = promoProducts
+    .map(
+      (product) => `
+      <article class="product-card promo-card">
+        <span class="promo-badge">${product.promoLabel || "Promotion"}</span>
+        <img src="${product.image}" alt="${product.name}" />
+        <div class="product-meta">
+          <h4>${product.name}</h4>
+          ${renderPriceHtml(product)}
+        </div>
+        <p class="category-tag">
+          ${formatCategoryLabel(product.category)} • ${formatStyleLabel(product.style)} • ${
+        product.line
+      }
+        </p>
+        <p class="description">${
+          product.promoDescription || product.description || "Offre speciale en cours."
+        }</p>
+        <button class="btn primary order-now-btn" data-id="${product.id}">
+          Commander cette promotion
+        </button>
+      </article>`
+    )
+    .join("");
+}
+
+function renderStorefront() {
+  renderPromoProducts();
+  renderProducts();
+  attachOrderNowHandlers();
 }
 
 function renderProducts() {
@@ -136,7 +229,7 @@ function renderProducts() {
               <img src="${p.image}" alt="${p.name}" />
               <div class="product-meta">
                 <h4>${p.name}</h4>
-                <span class="price">${p.price} €</span>
+                ${renderPriceHtml(p)}
               </div>
               <p class="category-tag">
                 ${formatCategoryLabel(p.category)} • ${formatStyleLabel(
@@ -155,15 +248,6 @@ function renderProducts() {
     })
     .join("");
 
-  document.querySelectorAll(".order-now-btn").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const product = products.find((p) => p.id === btn.dataset.id);
-      if (!product) return;
-      const text = `Bonjour NIKKAH GLAM, je suis interesse(e) par ${product.name} (${product.price} EUR). Pouvez-vous me confirmer la disponibilite ?`;
-      const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`;
-      window.open(url, "_blank");
-    });
-  });
 }
 
 function setFilter(filterValue, shouldScrollToCatalogue = false) {
@@ -175,7 +259,7 @@ function setFilter(filterValue, shouldScrollToCatalogue = false) {
   filterButtons.forEach((button) => button.classList.remove("active"));
   targetButton.classList.add("active");
   activeFilter = filterValue;
-  renderProducts();
+  renderStorefront();
 
   if (shouldScrollToCatalogue) {
     catalogueSection.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -272,12 +356,76 @@ function renderAdminProducts() {
           <p>${formatStyleLabel(product.style)} • ${formatCategoryLabel(
         product.category
       )} • ${product.line} • ${getGenderGroupLabel(product)}</p>
+          <label class="admin-check">
+            <input type="checkbox" class="admin-promo-enabled" data-id="${product.id}" ${
+        isProductOnPromotion(product) ? "checked" : ""
+      } />
+            Produit en promotion
+          </label>
+          <input
+            class="admin-promo-price-field"
+            data-id="${product.id}"
+            type="number"
+            min="0"
+            step="1"
+            placeholder="Prix promo"
+            value="${product.promoPrice || ""}"
+          />
+          <input
+            class="admin-promo-label-field"
+            data-id="${product.id}"
+            type="text"
+            placeholder="Titre promo"
+            value="${product.promoLabel || ""}"
+          />
+          <input
+            class="admin-promo-description-field"
+            data-id="${product.id}"
+            type="text"
+            placeholder="Description promo"
+            value="${product.promoDescription || ""}"
+          />
+          <button class="btn primary admin-save-promo-btn" data-id="${product.id}">
+            Enregistrer promotion
+          </button>
           <button class="btn ghost admin-delete-product-btn" data-id="${product.id}">
             Supprimer ce produit
           </button>
         </article>`
     )
     .join("");
+
+  document.querySelectorAll(".admin-save-promo-btn").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const id = btn.dataset.id;
+      const enabledEl = document.querySelector(`.admin-promo-enabled[data-id="${id}"]`);
+      const priceEl = document.querySelector(`.admin-promo-price-field[data-id="${id}"]`);
+      const labelEl = document.querySelector(`.admin-promo-label-field[data-id="${id}"]`);
+      const descEl = document.querySelector(
+        `.admin-promo-description-field[data-id="${id}"]`
+      );
+      const payload = {
+        promoEnabled: enabledEl?.checked === true,
+        promoPrice: priceEl?.value || "",
+        promoLabel: labelEl?.value || "",
+        promoDescription: descEl?.value || "",
+      };
+      const response = await fetch(`/api/products/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(payload),
+      });
+      if (!response.ok) {
+        alert("Mise a jour promo impossible. Verifie le prix promo.");
+        return;
+      }
+      products = await fetchProducts();
+      renderStorefront();
+      renderAdminProducts();
+      alert("Promotion mise a jour.");
+    });
+  });
 
   document.querySelectorAll(".admin-delete-product-btn").forEach((btn) => {
     btn.addEventListener("click", async () => {
@@ -292,7 +440,7 @@ function renderAdminProducts() {
         return;
       }
       products = await fetchProducts();
-      renderProducts();
+      renderStorefront();
       renderAdminProducts();
       alert("Produit supprimé avec succès.");
     });
@@ -338,6 +486,12 @@ adminForm.addEventListener("submit", async (event) => {
   const imageUrl = document.getElementById("admin-image").value.trim();
   const imageFileInput = document.getElementById("admin-image-file");
   const imageFile = imageFileInput.files[0];
+  const promoEnabled = document.getElementById("admin-promo-enabled").checked;
+  const promoPrice = document.getElementById("admin-promo-price").value;
+  const promoLabel = document.getElementById("admin-promo-label").value.trim();
+  const promoDescription = document
+    .getElementById("admin-promo-description")
+    .value.trim();
 
   if (!name || !price) {
     alert("Merci de remplir au minimum le nom et le prix.");
@@ -359,6 +513,10 @@ adminForm.addEventListener("submit", async (event) => {
   payload.append("target", finalTarget);
   if (line) payload.append("line", line);
   payload.append("price", String(price));
+  payload.append("promoEnabled", String(promoEnabled));
+  if (promoPrice) payload.append("promoPrice", promoPrice);
+  if (promoLabel) payload.append("promoLabel", promoLabel);
+  if (promoDescription) payload.append("promoDescription", promoDescription);
   payload.append("description", getAutoDescription(`${name} (${line})`, category, finalTarget));
   if (imageFile) {
     payload.append("imageFile", imageFile);
@@ -373,12 +531,13 @@ adminForm.addEventListener("submit", async (event) => {
   });
 
   if (!response.ok) {
-    alert("Ajout refusé. Vérifie la session admin.");
+    const data = await response.json().catch(() => ({}));
+    alert(data.message || "Ajout refusé. Vérifie la session admin.");
     return;
   }
 
   products = await fetchProducts();
-  renderProducts();
+  renderStorefront();
   renderAdminProducts();
   adminForm.reset();
   alert("Produit ajouté et classé automatiquement.");
@@ -422,7 +581,7 @@ adminLogoutBtn.addEventListener("click", async () => {
 
 async function init() {
   products = await fetchProducts();
-  renderProducts();
+  renderStorefront();
   isAdminAuthenticated = await checkAdminSession();
   setAdminVisibility();
   await refreshAdminOrders();

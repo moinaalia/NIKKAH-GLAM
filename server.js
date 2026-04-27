@@ -102,6 +102,26 @@ function writeOrders(orders) {
   fs.writeFileSync(ORDERS_FILE, JSON.stringify({ orders }, null, 2), "utf8");
 }
 
+function normalizePromotionFields(payload = {}, fallbackPrice = 0) {
+  const promoEnabled =
+    payload.promoEnabled === true ||
+    payload.promoEnabled === "true" ||
+    payload.promoEnabled === "1" ||
+    payload.promoEnabled === 1;
+  const promoPrice = Number(payload.promoPrice);
+  const finalPromoPrice =
+    Number.isFinite(promoPrice) && promoPrice > 0 && promoPrice < fallbackPrice
+      ? promoPrice
+      : null;
+
+  return {
+    promoEnabled: promoEnabled && finalPromoPrice !== null,
+    promoPrice: promoEnabled ? finalPromoPrice : null,
+    promoLabel: String(payload.promoLabel || "").trim(),
+    promoDescription: String(payload.promoDescription || "").trim(),
+  };
+}
+
 function inferCategoryStyleTargetLine({ name, line, imageHint }) {
   const source = `${name || ""} ${line || ""} ${imageHint || ""}`.toLowerCase();
   const includesOne = (words) => words.some((word) => source.includes(word));
@@ -279,7 +299,20 @@ app.post("/api/orders", (req, res) => {
 });
 
 app.post("/api/products", requireAdmin, upload.single("imageFile"), (req, res) => {
-  const { name, category, style, target, line, price, imageUrl, description } = req.body;
+  const {
+    name,
+    category,
+    style,
+    target,
+    line,
+    price,
+    imageUrl,
+    description,
+    promoEnabled,
+    promoPrice,
+    promoLabel,
+    promoDescription,
+  } = req.body;
   if (!name || !price) {
     res.status(400).json({ message: "Champs requis manquants." });
     return;
@@ -314,6 +347,11 @@ app.post("/api/products", requireAdmin, upload.single("imageFile"), (req, res) =
     description && String(description).trim().length > 0
       ? String(description).trim()
       : `${String(name).trim()} - ${finalLine}, ${finalStyle}, ${finalCategory}.`;
+  const finalPrice = Number(price);
+  const promotion = normalizePromotionFields(
+    { promoEnabled, promoPrice, promoLabel, promoDescription },
+    finalPrice
+  );
 
   const newProduct = {
     id: crypto.randomUUID(),
@@ -322,9 +360,10 @@ app.post("/api/products", requireAdmin, upload.single("imageFile"), (req, res) =
     style: finalStyle,
     target: finalTarget,
     line: finalLine,
-    price: Number(price),
+    price: finalPrice,
     image,
     description: finalDescription,
+    ...promotion,
     createdAt: new Date().toISOString(),
   };
 
@@ -332,6 +371,52 @@ app.post("/api/products", requireAdmin, upload.single("imageFile"), (req, res) =
   products.unshift(newProduct);
   writeProducts(products);
   res.status(201).json({ product: newProduct });
+});
+
+app.patch("/api/products/:id", requireAdmin, (req, res) => {
+  const productId = String(req.params.id || "").trim();
+  if (!productId) {
+    res.status(400).json({ message: "Identifiant produit manquant." });
+    return;
+  }
+
+  const products = readProducts();
+  const productIndex = products.findIndex((item) => item.id === productId);
+  if (productIndex === -1) {
+    res.status(404).json({ message: "Produit introuvable." });
+    return;
+  }
+
+  const current = products[productIndex];
+  const patch = req.body || {};
+  const nextPrice =
+    patch.price !== undefined && Number.isFinite(Number(patch.price))
+      ? Number(patch.price)
+      : Number(current.price);
+  const promotion = normalizePromotionFields(
+    {
+      promoEnabled:
+        patch.promoEnabled !== undefined ? patch.promoEnabled : current.promoEnabled,
+      promoPrice: patch.promoPrice !== undefined ? patch.promoPrice : current.promoPrice,
+      promoLabel: patch.promoLabel !== undefined ? patch.promoLabel : current.promoLabel,
+      promoDescription:
+        patch.promoDescription !== undefined
+          ? patch.promoDescription
+          : current.promoDescription,
+    },
+    nextPrice
+  );
+
+  const updated = {
+    ...current,
+    price: nextPrice,
+    ...promotion,
+    updatedAt: new Date().toISOString(),
+  };
+
+  products[productIndex] = updated;
+  writeProducts(products);
+  res.json({ product: updated });
 });
 
 app.delete("/api/products/:id", requireAdmin, (req, res) => {

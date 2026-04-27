@@ -8,6 +8,10 @@ const adminLoginMessage = document.getElementById("admin-login-message");
 const orderForm = document.getElementById("order-form");
 const adminSection = document.getElementById("admin");
 const adminLogoutBtn = document.getElementById("admin-logout-btn");
+const catalogueSection = document.getElementById("catalogue");
+const categoryBanners = document.querySelectorAll(".category-banner");
+const adminOrdersPanel = document.getElementById("admin-orders-panel");
+const adminOrdersList = document.getElementById("admin-orders-list");
 
 let products = [];
 let activeFilter = "all";
@@ -81,6 +85,17 @@ function renderProducts() {
             : p.category === activeFilter
         );
 
+  if (filtered.length === 0) {
+    productsGrid.innerHTML = `
+      <article class="product-card">
+        <div class="product-meta">
+          <h4>Aucun produit dans cette catégorie</h4>
+        </div>
+        <p class="description">Essayez "Tous" ou ajoutez des produits depuis l'espace admin.</p>
+      </article>`;
+    return;
+  }
+
   productsGrid.innerHTML = filtered
     .map(
       (p) => `
@@ -114,12 +129,31 @@ function renderProducts() {
   });
 }
 
+function setFilter(filterValue, shouldScrollToCatalogue = false) {
+  const targetButton = [...filterButtons].find(
+    (button) => button.dataset.filter === filterValue
+  );
+  if (!targetButton) return;
+
+  filterButtons.forEach((button) => button.classList.remove("active"));
+  targetButton.classList.add("active");
+  activeFilter = filterValue;
+  renderProducts();
+
+  if (shouldScrollToCatalogue) {
+    catalogueSection.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+}
+
 filterButtons.forEach((btn) => {
   btn.addEventListener("click", () => {
-    filterButtons.forEach((b) => b.classList.remove("active"));
-    btn.classList.add("active");
-    activeFilter = btn.dataset.filter;
-    renderProducts();
+    setFilter(btn.dataset.filter);
+  });
+});
+
+categoryBanners.forEach((banner) => {
+  banner.addEventListener("click", () => {
+    setFilter(banner.dataset.filter, true);
   });
 });
 
@@ -131,16 +165,57 @@ function hasAdminPageAccess() {
 function setAdminVisibility() {
   if (!hasAdminPageAccess()) {
     adminSection.classList.add("hidden");
+    adminOrdersPanel.classList.add("hidden");
     return;
   }
   adminSection.classList.remove("hidden");
   if (isAdminAuthenticated) {
     adminLoginForm.classList.add("hidden");
     adminForm.classList.remove("hidden");
+    adminOrdersPanel.classList.remove("hidden");
   } else {
     adminLoginForm.classList.remove("hidden");
     adminForm.classList.add("hidden");
+    adminOrdersPanel.classList.add("hidden");
   }
+}
+
+async function fetchOrders() {
+  const response = await fetch("/api/orders", { credentials: "include" });
+  if (!response.ok) return [];
+  const data = await response.json();
+  return Array.isArray(data.orders) ? data.orders : [];
+}
+
+function renderOrders(orders) {
+  if (!orders.length) {
+    adminOrdersList.innerHTML =
+      '<p class="input-help">Aucune commande pour le moment.</p>';
+    return;
+  }
+
+  adminOrdersList.innerHTML = orders
+    .map((order) => {
+      const paymentLabel = order.payment === "mvola" ? "Mvola" : "Cash";
+      const dateLabel = new Date(order.createdAt).toLocaleString("fr-FR");
+      return `
+        <article class="order-card">
+          <p><strong>Client:</strong> ${order.name}</p>
+          <p><strong>Pays:</strong> ${order.country}</p>
+          <p><strong>Téléphone:</strong> ${order.phone}</p>
+          <p><strong>Paiement:</strong> ${paymentLabel}</p>
+          <p><strong>Adresse:</strong> ${order.address}</p>
+          <p><strong>Détails:</strong> ${order.notes || "Aucun"}</p>
+          <p><strong>Reçu le:</strong> ${dateLabel}</p>
+        </article>`;
+    })
+    .join("");
+}
+
+async function refreshAdminOrders() {
+  if (!hasAdminPageAccess() || !isAdminAuthenticated) return;
+  const orders = await fetchOrders();
+  renderOrders(orders);
 }
 
 async function checkAdminSession() {
@@ -168,6 +243,7 @@ adminLoginForm.addEventListener("submit", async (event) => {
   adminLoginForm.reset();
   isAdminAuthenticated = true;
   setAdminVisibility();
+  await refreshAdminOrders();
 });
 
 adminForm.addEventListener("submit", async (event) => {
@@ -229,7 +305,7 @@ adminForm.addEventListener("submit", async (event) => {
   alert("Produit ajouté avec succès.");
 });
 
-orderForm.addEventListener("submit", (event) => {
+orderForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   const name = document.getElementById("client-name").value.trim();
   const country = document.getElementById("client-country").value.trim();
@@ -238,22 +314,18 @@ orderForm.addEventListener("submit", (event) => {
   const address = document.getElementById("client-address").value.trim();
   const notes = document.getElementById("client-notes").value.trim();
 
-  const message = `
-Nouvelle commande NIKKAH GLAM
-Nom: ${name}
-Pays: ${country}
-Téléphone: ${phone}
-Paiement: ${payment === "mvola" ? "Mvola" : "Cash"}
-Adresse: ${address}
-Détails: ${notes || "Aucun"}
-  `.trim();
+  const response = await fetch("/api/orders", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name, country, phone, payment, address, notes }),
+  });
 
-  const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
-    message
-  )}`;
-  window.open(whatsappUrl, "_blank");
+  if (!response.ok) {
+    alert("Impossible d'envoyer la commande. Réessaie.");
+    return;
+  }
 
-  alert("Commande préparée. Confirmez l'envoi sur WhatsApp.");
+  alert("Commande envoyée avec succès.");
   orderForm.reset();
 });
 
@@ -265,6 +337,7 @@ adminLogoutBtn.addEventListener("click", async () => {
   });
   isAdminAuthenticated = false;
   setAdminVisibility();
+  adminOrdersList.innerHTML = "";
 });
 
 async function init() {
@@ -272,6 +345,7 @@ async function init() {
   renderProducts();
   isAdminAuthenticated = await checkAdminSession();
   setAdminVisibility();
+  await refreshAdminOrders();
 }
 
 init();

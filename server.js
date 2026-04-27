@@ -23,12 +23,17 @@ const IS_PROD = NODE_ENV === "production";
 const DATA_DIR = path.join(__dirname, "data");
 const UPLOAD_DIR = path.join(__dirname, "uploads");
 const PRODUCTS_FILE = path.join(DATA_DIR, "products.json");
+const ORDERS_FILE = path.join(DATA_DIR, "orders.json");
 
 fs.mkdirSync(DATA_DIR, { recursive: true });
 fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 
 if (!fs.existsSync(PRODUCTS_FILE)) {
   fs.writeFileSync(PRODUCTS_FILE, JSON.stringify({ products: [] }, null, 2), "utf8");
+}
+
+if (!fs.existsSync(ORDERS_FILE)) {
+  fs.writeFileSync(ORDERS_FILE, JSON.stringify({ orders: [] }, null, 2), "utf8");
 }
 
 const storage = multer.diskStorage({
@@ -81,6 +86,20 @@ function readProducts() {
 
 function writeProducts(products) {
   fs.writeFileSync(PRODUCTS_FILE, JSON.stringify({ products }, null, 2), "utf8");
+}
+
+function readOrders() {
+  try {
+    const raw = fs.readFileSync(ORDERS_FILE, "utf8");
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed.orders) ? parsed.orders : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeOrders(orders) {
+  fs.writeFileSync(ORDERS_FILE, JSON.stringify({ orders }, null, 2), "utf8");
 }
 
 function requireAdmin(req, res, next) {
@@ -140,6 +159,40 @@ app.post("/api/admin/login", loginLimiter, async (req, res) => {
 app.post("/api/admin/logout", (_req, res) => {
   res.clearCookie("admin_token");
   res.json({ ok: true });
+});
+
+app.get("/api/orders", requireAdmin, (_req, res) => {
+  res.json({ orders: readOrders() });
+});
+
+app.post("/api/orders", (req, res) => {
+  const { name, country, phone, payment, address, notes } = req.body || {};
+  if (!name || !country || !phone || !payment || !address) {
+    res.status(400).json({ message: "Champs requis manquants." });
+    return;
+  }
+
+  if (payment !== "mvola" && payment !== "cash") {
+    res.status(400).json({ message: "Mode de paiement invalide." });
+    return;
+  }
+
+  const newOrder = {
+    id: crypto.randomUUID(),
+    name: String(name).trim(),
+    country: String(country).trim(),
+    phone: String(phone).trim(),
+    payment,
+    address: String(address).trim(),
+    notes: String(notes || "").trim(),
+    createdAt: new Date().toISOString(),
+    status: "nouvelle",
+  };
+
+  const orders = readOrders();
+  orders.unshift(newOrder);
+  writeOrders(orders);
+  res.status(201).json({ order: newOrder });
 });
 
 app.post("/api/products", requireAdmin, upload.single("imageFile"), (req, res) => {

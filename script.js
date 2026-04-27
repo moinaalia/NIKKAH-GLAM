@@ -159,7 +159,7 @@ function renderProducts() {
     btn.addEventListener("click", () => {
       const product = products.find((p) => p.id === btn.dataset.id);
       if (!product) return;
-      const text = `Bonjour NIKKAH GLAM, je veux commander: ${product.name} (${product.price} €).`;
+      const text = `Bonjour NIKKAH GLAM, je suis interesse(e) par ${product.name} (${product.price} EUR). Pouvez-vous me confirmer la disponibilite ?`;
       const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`;
       window.open(url, "_blank");
     });

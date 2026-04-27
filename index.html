@@ -127,9 +127,9 @@
 
       <section class="container section" id="catalogue">
         <div class="section-head">
-          <h3>Produits disponibles</h3>
+          <h3>Catalogue (classé automatiquement)</h3>
           <div class="filters">
-            <button class="filter-btn active" data-filter="all">Tous</button>
+            <button class="filter-btn active" data-filter="all">Tout voir</button>
             <button class="filter-btn" data-filter="vetement">Vêtements</button>
             <button class="filter-btn" data-filter="chaussure">Chaussures</button>
             <button class="filter-btn" data-filter="accessoire">Accessoires</button>
@@ -141,9 +141,9 @@
       </section>
 
       <section class="container section order" id="commande">
-        <h3>Commande directe</h3>
+        <h3>Commande rapide</h3>
         <p>
-          Remplissez ce formulaire pour commander depuis n’importe quel pays.
+          Remplissez ce formulaire pour commander directement depuis le site.
         </p>
         <form id="order-form" class="order-form">
           <input type="text" id="client-name" placeholder="Nom complet" required />
@@ -163,22 +163,22 @@
             id="client-notes"
             placeholder="Détails supplémentaires (tailles, couleurs...)"
           ></textarea>
-          <button type="submit" class="btn primary">Envoyer la commande</button>
+          <button type="submit" class="btn primary">Valider ma commande</button>
         </form>
         <a
           class="whatsapp-link"
           href="https://wa.me/905348439206"
           target="_blank"
           rel="noreferrer noopener"
-          >Ou commander instantanément sur WhatsApp</a
+          >Ou commander directement sur WhatsApp</a
         >
       </section>
 
       <section class="container section admin hidden" id="admin">
-        <h3>Espace Propriétaire (Ajout Produits)</h3>
+        <h3>Espace Admin (gestion produits)</h3>
         <p>
-          Zone sécurisée. Seul l’administrateur avec mot de passe peut ajouter
-          des produits et définir les prix.
+          Zone sécurisée. L’administrateur peut ajouter et supprimer les produits
+          puis suivre les commandes clients.
         </p>
         <form id="admin-login-form" class="admin-form admin-locked">
           <input
@@ -193,7 +193,7 @@
         <form id="admin-form" class="admin-form hidden">
           <input type="text" id="admin-product-name" placeholder="Nom du produit" required />
           <select id="admin-category" title="Catégorie du produit" required>
-            <option value="">Type de produit</option>
+            <option value="">Catégorie produit</option>
             <option value="auto">Détection automatique</option>
             <option value="vetement">Vêtement</option>
             <option value="chaussure">Chaussure</option>

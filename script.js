@@ -102,9 +102,9 @@ function renderProducts() {
     productsGrid.innerHTML = `
       <article class="product-card">
         <div class="product-meta">
-          <h4>Aucun produit dans cette catégorie</h4>
+          <h4>Aucun produit disponible ici</h4>
         </div>
-        <p class="description">Essayez "Tous" ou ajoutez des produits depuis l'espace admin.</p>
+        <p class="description">Essayez "Tout voir" ou choisissez une autre catégorie.</p>
       </article>`;
     return;
   }
@@ -145,7 +145,7 @@ function renderProducts() {
               </p>
               <p class="description">${p.description}</p>
               <button class="btn ghost order-now-btn" data-id="${p.id}">
-                Commander ce produit
+                Commander sur WhatsApp
               </button>
             </article>`
             )
@@ -281,7 +281,7 @@ function renderAdminProducts() {
 
   document.querySelectorAll(".admin-delete-product-btn").forEach((btn) => {
     btn.addEventListener("click", async () => {
-      const confirmed = window.confirm("Supprimer ce produit ?");
+      const confirmed = window.confirm("Confirmer la suppression de ce produit ?");
       if (!confirmed) return;
       const response = await fetch(`/api/products/${btn.dataset.id}`, {
         method: "DELETE",
@@ -294,7 +294,7 @@ function renderAdminProducts() {
       products = await fetchProducts();
       renderProducts();
       renderAdminProducts();
-      alert("Produit supprimé.");
+      alert("Produit supprimé avec succès.");
     });
   });
 }
@@ -381,7 +381,7 @@ adminForm.addEventListener("submit", async (event) => {
   renderProducts();
   renderAdminProducts();
   adminForm.reset();
-  alert("Produit ajouté avec succès.");
+  alert("Produit ajouté et classé automatiquement.");
 });
 
 orderForm.addEventListener("submit", async (event) => {
@@ -404,7 +404,7 @@ orderForm.addEventListener("submit", async (event) => {
     return;
   }
 
-  alert("Commande envoyée avec succès.");
+  alert("Commande envoyée. Merci, nous vous contacterons rapidement.");
   orderForm.reset();
 });
 

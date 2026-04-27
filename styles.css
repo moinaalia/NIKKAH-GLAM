@@ -213,6 +213,7 @@ h2 {
   justify-content: space-between;
   align-items: center;
   gap: 1rem;
+  flex-wrap: wrap;
 }
 
 .filters {
@@ -233,6 +234,10 @@ h2 {
 .filter-btn.active {
   background: var(--green);
   color: #fff;
+}
+
+.filter-btn:hover {
+  border-color: var(--green);
 }
 
 .products-grid {

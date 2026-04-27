@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NIKKAH GLAM | Mariage Comorien</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="hero">
+      <nav class="nav container">
+        <a class="site-logo" href="#">
+          <img src="assets/logo-nikkah-glam.svg" alt="Logo NIKKAH GLAM" />
+        </a>
+        <div class="nav-links">
+          <a href="#catalogue">Catalogue</a>
+          <a href="#commande">Commander</a>
+        </div>
+      </nav>
+      <div class="hero-content container">
+        <div>
+          <p class="badge">Spécial Mariage Comorien</p>
+          <h2>Mode mariage comorienne pour tous les participants</h2>
+          <p>
+            Vêtements, chaussures et accessoires pour mariés, invité(e)s, femmes
+            d’honneur et familles, en styles traditionnels et modernes.
+          </p>
+          <div class="hero-actions">
+            <a class="btn primary" href="#catalogue">Voir les produits</a>
+            <a
+              class="btn ghost"
+              href="https://wa.me/905348439206"
+              target="_blank"
+              rel="noreferrer noopener"
+              >Commander sur WhatsApp</a
+            >
+          </div>
+        </div>
+        <div class="brand-photo">
+          <img
+            src="https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1200&q=80"
+            alt="Image de marque NIKKAH GLAM"
+          />
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section class="container section highlights">
+        <article>
+          <h4>Style Premium</h4>
+          <p>Sélection élégante en blanc, marron et vert pour une identité raffinée.</p>
+        </article>
+        <article>
+          <h4>Inspiration Comorienne</h4>
+          <p>Lignes modernes et touche insulaire pour sublimer chaque cérémonie.</p>
+        </article>
+        <article>
+          <h4>Commande Rapide</h4>
+          <p>Catalogue clair, prix visibles et commande directe sur WhatsApp.</p>
+        </article>
+      </section>
+
+      <section class="container section about" id="about">
+        <h3>Une expérience mariage unique</h3>
+        <p>
+          NIKKAH GLAM est une boutique en ligne dédiée à l’univers du mariage
+          comorien. Notre sélection couvre tous les profils de la cérémonie :
+          mariés, invités, femmes d’honneur et proches. Vous trouvez facilement
+          les vêtements, chaussures et accessoires, classés par style
+          traditionnel ou moderne, avec des prix clairs et une commande simple
+          depuis n’importe où dans le monde.
+        </p>
+      </section>
+
+      <section class="container section" id="categories">
+        <h3>Catégories mariage comorien</h3>
+        <div class="category-banners four-cols">
+          <article class="banner">
+            <img
+              src="https://images.unsplash.com/photo-1525258946800-98cfd641d0de?auto=format&fit=crop&w=1200&q=80"
+              alt="Catégorie Kandou traditionnel"
+            />
+            <div class="banner-text">
+              <h4>Vêtements traditionnels - Kandou</h4>
+              <p>Pièces iconiques comoriennes pour mariées, invitées et famille.</p>
+            </div>
+          </article>
+          <article class="banner">
+            <img
+              src="https://images.unsplash.com/photo-1614676471928-2ed0ad1061a4?auto=format&fit=crop&w=1200&q=80"
+              alt="Catégorie vêtements modernes"
+            />
+            <div class="banner-text">
+              <h4>Vêtements modernes</h4>
+              <p>Coupes actuelles pour homme et femme lors des événements.</p>
+            </div>
+          </article>
+          <article class="banner">
+            <img
+              src="https://images.unsplash.com/photo-1549298916-b41d501d3772?auto=format&fit=crop&w=1200&q=80"
+              alt="Catégorie chaussures"
+            />
+            <div class="banner-text">
+              <h4>Chaussures</h4>
+              <p>Modèles cérémonie pour mariés, invité(e)s et femmes d’honneur.</p>
+            </div>
+          </article>
+          <article class="banner">
+            <img
+              src="https://images.unsplash.com/photo-1617038260897-41a1f14a8ca0?auto=format&fit=crop&w=1200&q=80"
+              alt="Catégorie accessoires"
+            />
+            <div class="banner-text">
+              <h4>Accessoires</h4>
+              <p>Bijoux, sacs, voiles et détails qui complètent chaque tenue.</p>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="container section" id="catalogue">
+        <div class="section-head">
+          <h3>Produits disponibles</h3>
+          <div class="filters">
+            <button class="filter-btn active" data-filter="all">Tous</button>
+            <button class="filter-btn" data-filter="vetement">Vêtements</button>
+            <button class="filter-btn" data-filter="chaussure">Chaussures</button>
+            <button class="filter-btn" data-filter="accessoire">Accessoires</button>
+            <button class="filter-btn" data-filter="traditionnel">Traditionnel</button>
+            <button class="filter-btn" data-filter="moderne">Moderne</button>
+          </div>
+        </div>
+        <div id="products-grid" class="products-grid"></div>
+      </section>
+
+      <section class="container section order" id="commande">
+        <h3>Commande directe</h3>
+        <p>
+          Remplissez ce formulaire pour commander depuis n’importe quel pays.
+        </p>
+        <form id="order-form" class="order-form">
+          <input type="text" id="client-name" placeholder="Nom complet" required />
+          <input type="text" id="client-country" placeholder="Pays" required />
+          <input type="tel" id="client-phone" placeholder="Téléphone" required />
+          <select id="client-payment" title="Mode de paiement" required>
+            <option value="">Mode de paiement</option>
+            <option value="mvola">Mvola</option>
+            <option value="cash">Cash</option>
+          </select>
+          <textarea
+            id="client-address"
+            placeholder="Adresse de livraison complète"
+            required
+          ></textarea>
+          <textarea
+            id="client-notes"
+            placeholder="Détails supplémentaires (tailles, couleurs...)"
+          ></textarea>
+          <button type="submit" class="btn primary">Envoyer la commande</button>
+        </form>
+        <a
+          class="whatsapp-link"
+          href="https://wa.me/905348439206"
+          target="_blank"
+          rel="noreferrer noopener"
+          >Ou commander instantanément sur WhatsApp</a
+        >
+      </section>
+
+      <section class="container section admin hidden" id="admin">
+        <h3>Espace Propriétaire (Ajout Produits)</h3>
+        <p>
+          Zone sécurisée. Seul l’administrateur avec mot de passe peut ajouter
+          des produits et définir les prix.
+        </p>
+        <form id="admin-login-form" class="admin-form admin-locked">
+          <input
+            type="password"
+            id="admin-password"
+            placeholder="Mot de passe administrateur"
+            required
+          />
+          <button type="submit" class="btn ghost">Se connecter</button>
+          <p class="input-help" id="admin-login-message"></p>
+        </form>
+        <form id="admin-form" class="admin-form hidden">
+          <input type="text" id="admin-product-name" placeholder="Nom du produit" required />
+          <select id="admin-category" title="Catégorie du produit" required>
+            <option value="">Type de produit</option>
+            <option value="vetement">Vêtement</option>
+            <option value="chaussure">Chaussure</option>
+            <option value="accessoire">Accessoire</option>
+          </select>
+          <select id="admin-style" title="Style du produit" required>
+            <option value="">Style</option>
+            <option value="traditionnel">Traditionnel</option>
+            <option value="moderne">Moderne</option>
+          </select>
+          <select id="admin-target" title="Public concerné" required>
+            <option value="">Public concerné</option>
+            <option value="auto">Détection automatique</option>
+            <option value="mariee">Mariée</option>
+            <option value="marie">Marié</option>
+            <option value="invite">Invité(e)</option>
+            <option value="femme_honneur">Femme d'honneur</option>
+            <option value="famille">Famille</option>
+          </select>
+          <input
+            type="text"
+            id="admin-line"
+            placeholder="Sous-catégorie (ex: Kandou)"
+            required
+          />
+          <input
+            type="number"
+            id="admin-price"
+            min="0"
+            step="1"
+            placeholder="Prix (en €)"
+            required
+          />
+          <input
+            type="url"
+            id="admin-image"
+            placeholder="Lien photo (optionnel) (https://...)"
+          />
+          <input
+            type="file"
+            id="admin-image-file"
+            title="Photo du produit depuis l'appareil"
+            accept="image/*"
+          />
+          <p class="input-help">
+            Tu peux ajouter soit un lien photo, soit choisir une image depuis ton
+            appareil.
+          </p>
+          <button type="submit" class="btn primary">Ajouter le produit</button>
+          <button id="admin-logout-btn" type="button" class="btn ghost">
+            Déconnexion admin
+          </button>
+        </form>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <p>© <span id="year"></span> NIKKAH GLAM - Mariage Comorien</p>
+    </footer>
+
+    <script src="script.js"></script>
+  </body>
+</html>

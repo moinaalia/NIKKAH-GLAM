@@ -1,0 +1,24 @@
+<svg width="760" height="240" viewBox="0 0 760 240" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="brownGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#A17349"/>
+      <stop offset="100%" stop-color="#6B452C"/>
+    </linearGradient>
+    <linearGradient id="greenGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#2F8F68"/>
+      <stop offset="100%" stop-color="#1F5D47"/>
+    </linearGradient>
+  </defs>
+
+  <rect x="18" y="18" width="204" height="204" rx="30" fill="#FFFFFF"/>
+  <rect x="18" y="18" width="204" height="204" rx="30" stroke="url(#brownGrad)" stroke-width="4"/>
+
+  <path d="M52 144C84 122 98 102 117 78C133 97 155 119 184 143" stroke="url(#brownGrad)" stroke-width="6" stroke-linecap="round"/>
+  <path d="M54 158C86 172 152 172 186 158" stroke="url(#greenGrad)" stroke-width="6" stroke-linecap="round"/>
+  <path d="M82 86C92 72 107 63 121 62C141 61 156 74 162 89" stroke="url(#greenGrad)" stroke-width="5" stroke-linecap="round"/>
+  <circle cx="162" cy="72" r="7" fill="#2F8F68"/>
+
+  <text x="250" y="102" fill="url(#brownGrad)" font-family="Georgia, 'Times New Roman', serif" font-size="62" letter-spacing="2">NIKKAH</text>
+  <text x="252" y="160" fill="#2A6D53" font-family="Arial, Helvetica, sans-serif" font-size="50" letter-spacing="9">GLAM</text>
+  <text x="252" y="192" fill="#7B5A44" font-family="Arial, Helvetica, sans-serif" font-size="16" letter-spacing="3">ELEGANCE DES ILES COMORES</text>
+</svg>

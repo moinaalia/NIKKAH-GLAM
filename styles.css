@@ -349,6 +349,26 @@ h2 {
   margin-bottom: 0.4rem;
 }
 
+.loyalty-badge {
+  display: inline-block;
+  background: linear-gradient(90deg, #2f8f68 0%, #8b5e3c 100%);
+  color: #fff;
+  padding: 0.25rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  margin-bottom: 0.4rem;
+  margin-left: 0.35rem;
+}
+
+.save-badge {
+  display: inline-block;
+  margin-top: 0.15rem;
+  color: #c0392b;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
 .order-form,
 .admin-form {
   display: grid;

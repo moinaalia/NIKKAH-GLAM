@@ -107,6 +107,11 @@ function isProductOnPromotion(product) {
   );
 }
 
+function getPromotionSavings(product) {
+  if (!isProductOnPromotion(product)) return 0;
+  return Math.max(0, Math.round((product.price - product.promoPrice) * 100) / 100);
+}
+
 function getProductCurrentPrice(product) {
   return isProductOnPromotion(product) ? product.promoPrice : product.price;
 }
@@ -115,11 +120,25 @@ function renderPriceHtml(product) {
   if (!isProductOnPromotion(product)) {
     return `<span class="price">${product.price} €</span>`;
   }
+  const savings = getPromotionSavings(product);
   return `
     <div class="price-stack">
       <span class="old-price">${product.price} €</span>
       <span class="price promo-price">${product.promoPrice} €</span>
+      <span class="save-badge">Vous economisez ${savings} €</span>
     </div>`;
+}
+
+function renderPromoMetaBadges(product) {
+  const badges = [];
+  badges.push(`<span class="promo-badge">${product.promoLabel || "Promotion"}</span>`);
+  if (
+    String(product.promoLabel || "").toLowerCase().includes("fidele") ||
+    String(product.promoDescription || "").toLowerCase().includes("fidele")
+  ) {
+    badges.push('<span class="loyalty-badge">Prix client fidele</span>');
+  }
+  return badges.join("");
 }
 
 function attachOrderNowHandlers() {
@@ -153,7 +172,7 @@ function renderPromoProducts() {
     .map(
       (product) => `
       <article class="product-card promo-card">
-        <span class="promo-badge">${product.promoLabel || "Promotion"}</span>
+        ${renderPromoMetaBadges(product)}
         <img src="${product.image}" alt="${product.name}" />
         <div class="product-meta">
           <h4>${product.name}</h4>
@@ -186,7 +205,9 @@ function renderProducts() {
     activeFilter === "all"
       ? products
       : products.filter((p) =>
-          activeFilter === "traditionnel" || activeFilter === "moderne"
+          activeFilter === "promo"
+            ? isProductOnPromotion(p)
+            : activeFilter === "traditionnel" || activeFilter === "moderne"
             ? p.style === activeFilter
             : p.category === activeFilter
         );
@@ -225,7 +246,8 @@ function renderProducts() {
           ${groupProducts
             .map(
               (p) => `
-            <article class="product-card">
+            <article class="product-card ${isProductOnPromotion(p) ? "promo-card" : ""}">
+              ${isProductOnPromotion(p) ? renderPromoMetaBadges(p) : ""}
               <img src="${p.image}" alt="${p.name}" />
               <div class="product-meta">
                 <h4>${p.name}</h4>
